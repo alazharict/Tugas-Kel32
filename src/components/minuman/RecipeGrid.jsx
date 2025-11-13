@@ -1,6 +1,20 @@
 // src/components/minuman/RecipeGrid.jsx
 import { Clock, Star, Coffee, ChefHat } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
+import LazyImage from '../common/LazyImage';
+
+function formatBytes(bytes) {
+  if (!bytes) return '';
+  const thresh = 1024;
+  if (Math.abs(bytes) < thresh) return bytes + ' B';
+  const units = ['KB','MB','GB','TB'];
+  let u = -1;
+  do {
+    bytes /= thresh;
+    ++u;
+  } while(Math.abs(bytes) >= thresh && u < units.length - 1);
+  return bytes.toFixed(1) + ' ' + units[u];
+}
 import FavoriteButton from '../common/FavoriteButton';
 
 export default function RecipeGrid({ recipes, onRecipeClick }) {
@@ -58,10 +72,11 @@ export default function RecipeGrid({ recipes, onRecipeClick }) {
               className="relative bg-white/15 backdrop-blur-xl border border-white/25 rounded-2xl md:rounded-3xl overflow-hidden shadow-lg md:shadow-2xl shadow-green-500/5 hover:shadow-green-500/15 transition-all duration-500 cursor-pointer group-hover:scale-105 group-hover:bg-white/20">
               <div className="absolute inset-0 bg-gradient-to-br from-white/5 via-transparent to-green-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
               <div className="relative h-32 md:h-56 overflow-hidden">
-                <img 
+                <LazyImage
                   src={recipe.image_url}
                   alt={recipe.name}
-                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                  className="group-hover:scale-110 transition-transform duration-500"
+                  recipeId={recipe.id}
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent" />
                 

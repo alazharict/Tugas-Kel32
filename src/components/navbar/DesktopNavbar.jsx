@@ -1,8 +1,24 @@
 // src/components/DesktopNavbar.jsx
+/* eslint-disable react/prop-types */
 import { Plus } from 'lucide-react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import logoUrl from '../../assets/LOGORN.png';
 
-export default function DesktopNavbar({ currentPage, onNavigate, onCreateRecipe }) {
+export default function DesktopNavbar() {
+  const navigate = useNavigate();
+  const location = useLocation();
+  
+  // Determine current page from pathname
+  const getCurrentPage = () => {
+    const path = location.pathname;
+    if (path === '/' || path === '/home') return 'home';
+    if (path.startsWith('/makanan')) return 'makanan';
+    if (path.startsWith('/minuman')) return 'minuman';
+    if (path.startsWith('/profile')) return 'profile';
+    return 'home';
+  };
+  
+  const currentPage = getCurrentPage();
   const navItems = [
     { id: 'home', label: 'Beranda' },
     { id: 'makanan', label: 'Makanan' },
@@ -42,7 +58,7 @@ export default function DesktopNavbar({ currentPage, onNavigate, onCreateRecipe 
             {navItems.map((item) => (
               <button
                 key={item.id}
-                onClick={() => onNavigate(item.id)}
+                onClick={() => navigate(`/${item.id === 'home' ? '' : item.id}`)}
                 className={`px-4 py-3 text-base font-medium transition-all duration-200 border-b-2 ${
                   currentPage === item.id
                     ? 'text-blue-600 border-blue-500'
@@ -55,7 +71,7 @@ export default function DesktopNavbar({ currentPage, onNavigate, onCreateRecipe 
             
             {/* Buat Resep Button */}
             <button
-              onClick={onCreateRecipe}
+              onClick={() => navigate('/create-recipe')}
               className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 shadow-md hover:shadow-lg transform hover:scale-105 font-medium"
             >
               <Plus className="w-5 h-5" />

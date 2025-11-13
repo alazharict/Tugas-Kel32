@@ -1,12 +1,14 @@
 // src/pages/CreateRecipePage.jsx
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Upload, X, Plus, Image as ImageIcon, Loader, Save, AlertCircle, CheckCircle } from 'lucide-react';
 import recipeService from '../services/recipeService';
 import uploadService from '../services/uploadService';
 import { saveDraft, loadDraft, deleteDraft, hasDraft, getDraftTimestamp, formatDraftTime } from '../utils/draftStorage';
 import ConfirmModal from '../components/modals/ConfirmModal';
 
-export default function CreateRecipePage({ onBack, onSuccess }) {
+export default function CreateRecipePage() {
+  const navigate = useNavigate();
   // Step state: 'upload' or 'form'
   const [currentStep, setCurrentStep] = useState('upload');
   
@@ -32,7 +34,6 @@ export default function CreateRecipePage({ onBack, onSuccess }) {
   const [error, setError] = useState('');
   const [showDraftModal, setShowDraftModal] = useState(false);
   const [draftTimestamp, setDraftTimestamp] = useState(null);
-  const [autoSaveEnabled, setAutoSaveEnabled] = useState(true);
 
   // Check for existing draft on mount
   useEffect(() => {
@@ -43,16 +44,32 @@ export default function CreateRecipePage({ onBack, onSuccess }) {
     }
   }, []);
 
+  // Save draft manually - wrapped with useCallback to avoid dependency issues
+  const handleSaveDraft = useCallback(() => {
+    const draftData = {
+      formData,
+      ingredients,
+      steps,
+      uploadedImageUrl,
+    };
+    
+    const success = saveDraft(draftData, 'create');
+    if (success) {
+      const timestamp = getDraftTimestamp('create');
+      setDraftTimestamp(timestamp);
+    }
+  }, [formData, ingredients, steps, uploadedImageUrl]);
+
   // Auto-save draft every 30 seconds (only when in form step)
   useEffect(() => {
-    if (!autoSaveEnabled || currentStep !== 'form') return;
+    if (currentStep !== 'form') return;
 
     const interval = setInterval(() => {
       handleSaveDraft();
     }, 30000); // 30 seconds
 
     return () => clearInterval(interval);
-  }, [formData, ingredients, steps, autoSaveEnabled, currentStep]);
+  }, [handleSaveDraft, currentStep]);
 
   // Load draft
   const handleLoadDraft = () => {
@@ -76,22 +93,6 @@ export default function CreateRecipePage({ onBack, onSuccess }) {
     deleteDraft('create');
     setShowDraftModal(false);
     setDraftTimestamp(null);
-  };
-
-  // Save draft manually
-  const handleSaveDraft = () => {
-    const draftData = {
-      formData,
-      ingredients,
-      steps,
-      uploadedImageUrl,
-    };
-    
-    const success = saveDraft(draftData, 'create');
-    if (success) {
-      const timestamp = getDraftTimestamp('create');
-      setDraftTimestamp(timestamp);
-    }
   };
 
   // Handle image selection
@@ -292,10 +293,10 @@ export default function CreateRecipePage({ onBack, onSuccess }) {
       if (result.success) {
         alert('Resep berhasil dibuat!');
         deleteDraft('create'); // Clear draft after successful creation
-        if (onSuccess) {
-          onSuccess(result.data);
-        } else if (onBack) {
-          onBack();
+        if (result.data && result.data.category) {
+          navigate(`/${result.data.category}`);
+        } else {
+          navigate('/');
         }
       } else {
         throw new Error(result.message || 'Gagal membuat resep');
@@ -326,7 +327,7 @@ export default function CreateRecipePage({ onBack, onSuccess }) {
       <div className="sticky top-0 z-10 bg-white/80 backdrop-blur-md border-b border-slate-200 shadow-sm">
         <div className="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
           <button
-            onClick={onBack}
+            onClick={() => navigate(-1)}
             className="flex items-center gap-2 text-slate-700 hover:text-slate-900 transition-colors"
           >
             <ArrowLeft className="w-5 h-5" />
@@ -358,7 +359,7 @@ export default function CreateRecipePage({ onBack, onSuccess }) {
           <h1 className="text-3xl font-bold text-slate-800 mb-2">Buat Resep Baru</h1>
           <div className="flex items-center justify-between mb-6">
             <p className="text-slate-600">Bagikan resep favoritmu dengan komunitas</p>
-            {autoSaveEnabled && currentStep === 'form' && (
+            {currentStep === 'form' && (
               <div className="flex items-center gap-2 text-sm text-green-600">
                 <AlertCircle className="w-4 h-4" />
                 <span>Auto-save aktif</span>
@@ -447,7 +448,7 @@ export default function CreateRecipePage({ onBack, onSuccess }) {
                     type="button"
                     onClick={handleUploadImage}
                     disabled={uploading}
-                    className="w-full py-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-semibold rounded-xl hover:from-blue-700 hover:to-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg hover:shadow-xl flex items-center justify-center gap-2"
+                    className="w-full py-4 bg-linear-to-r from-blue-600 to-indigo-600 text-white font-semibold rounded-xl hover:from-blue-700 hover:to-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg hover:shadow-xl flex items-center justify-center gap-2"
                   >
                     {uploading ? (
                       <>
@@ -661,7 +662,7 @@ export default function CreateRecipePage({ onBack, onSuccess }) {
               <div className="space-y-3">
                 {steps.map((step, index) => (
                   <div key={index} className="flex gap-3">
-                    <div className="flex-shrink-0 w-10 h-10 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold">
+                    <div className="shrink-0 w-10 h-10 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold">
                       {index + 1}
                     </div>
                     <textarea
@@ -711,7 +712,7 @@ export default function CreateRecipePage({ onBack, onSuccess }) {
             <div className="flex flex-col md:flex-row gap-4 pt-6">
               <button
                 type="button"
-                onClick={onBack}
+                onClick={() => navigate(-1)}
                 disabled={creating}
                 className="flex-1 px-6 py-3 border border-slate-300 text-slate-700 rounded-xl hover:bg-slate-50 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
               >

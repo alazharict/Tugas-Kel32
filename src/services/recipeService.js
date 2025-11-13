@@ -1,4 +1,5 @@
 import { apiClient } from '../config/api';
+import queryCache from '../Utils/queryCache';
 
 class RecipeService {
   /**
@@ -15,8 +16,37 @@ class RecipeService {
    */
   async getRecipes(params = {}) {
     try {
+      const cacheKey = `recipes:${JSON.stringify(params)}`;
+      const cached = queryCache.get(cacheKey);
+      if (cached) {
+        return { success: true, data: cached.data, pagination: cached.pagination || null, fromCache: true };
+      }
+
       const response = await apiClient.get('/api/v1/recipes', { params });
-      return response;
+      const payload = response?.data;
+
+      let success = true;
+      let data = null;
+      let pagination = null;
+
+      if (payload && typeof payload === 'object' && payload.hasOwnProperty('success')) {
+        success = !!payload.success;
+        data = payload.data || [];
+        pagination = payload.pagination || payload.meta || null;
+      } else {
+        // assume raw data array or object
+        data = payload;
+      }
+
+      if (success) {
+        try {
+          queryCache.set(cacheKey, { data, pagination }, { ttl: 1000 * 60 * 10 });
+        } catch (e) {
+          // ignore cache failures
+        }
+      }
+
+      return { success, data, pagination };
     } catch (error) {
       throw error;
     }
@@ -29,8 +59,30 @@ class RecipeService {
    */
   async getRecipeById(id) {
     try {
+      const cacheKey = `recipe:${id}`;
+      const cached = queryCache.get(cacheKey);
+      if (cached) {
+        return { success: true, data: cached.data, fromCache: true };
+      }
+
       const response = await apiClient.get(`/api/v1/recipes/${id}`);
-      return response;
+      const payload = response?.data;
+
+      let success = true;
+      let data = null;
+
+      if (payload && typeof payload === 'object' && payload.hasOwnProperty('success')) {
+        success = !!payload.success;
+        data = payload.data || null;
+      } else {
+        data = payload;
+      }
+
+      if (success && data) {
+        try { queryCache.set(cacheKey, { data }, { ttl: 1000 * 60 * 60 }); } catch(e){}
+      }
+
+      return { success, data };
     } catch (error) {
       throw error;
     }

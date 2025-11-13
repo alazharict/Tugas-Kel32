@@ -1,10 +1,12 @@
 // src/pages/HomePage.jsx
+import { useNavigate } from 'react-router-dom';
 import { useRecipes } from '../hooks/useRecipes';
 import HeroSection from '../components/home/HeroSection';
 import FeaturedMakananSection from '../components/home/FeaturedMakananSection';
 import FeaturedMinumanSection from '../components/home/FeaturedMinumanSection';
 
-export default function HomePage({ onRecipeClick, onNavigate }) {
+export default function HomePage() {
+  const navigate = useNavigate();
   // Fetch featured makanan (food) recipes from API
   const { 
     recipes: featuredMakanan, 
@@ -30,7 +32,7 @@ export default function HomePage({ onRecipeClick, onNavigate }) {
   });
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50">
+    <div className="min-h-screen bg-linear-to-br from-blue-50 via-white to-indigo-50">
       <HeroSection />
       
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 space-y-16">
@@ -39,8 +41,8 @@ export default function HomePage({ onRecipeClick, onNavigate }) {
           recipes={featuredMakanan}
           loading={loadingMakanan}
           error={errorMakanan}
-          onRecipeClick={onRecipeClick}
-          onNavigate={onNavigate}
+          onRecipeClick={(recipeId) => navigate(`/recipe/${recipeId}`)}
+          onNavigate={(page) => navigate(`/${page}`)}
         />
 
         {/* Featured Minuman Section */}
@@ -48,8 +50,8 @@ export default function HomePage({ onRecipeClick, onNavigate }) {
           recipes={featuredMinuman}
           loading={loadingMinuman}
           error={errorMinuman}
-          onRecipeClick={onRecipeClick}
-          onNavigate={onNavigate}
+          onRecipeClick={(recipeId) => navigate(`/recipe/${recipeId}`)}
+          onNavigate={(page) => navigate(`/${page}`)}
         />
       </div>
     </div>

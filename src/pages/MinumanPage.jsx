@@ -1,10 +1,12 @@
 // src/pages/MinumanPage.jsx
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useRecipes } from '../hooks/useRecipes';
 import RecipeGrid from '../components/minuman/RecipeGrid';
 import AdvancedFilter from '../components/common/AdvancedFilter';
 
-export default function MinumanPage({ onRecipeClick }) {
+export default function MinumanPage() {
+  const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const [filters, setFilters] = useState({
     difficulty: '',
@@ -97,7 +99,7 @@ export default function MinumanPage({ onRecipeClick }) {
                 </p>
               </div>
             ) : (
-              <RecipeGrid recipes={filteredRecipes} onRecipeClick={onRecipeClick} />
+              <RecipeGrid recipes={filteredRecipes} onRecipeClick={(recipeId) => navigate(`/recipe/${recipeId}`)} />
             )}
 
             {/* Pagination */}

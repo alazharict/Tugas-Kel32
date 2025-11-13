@@ -1,10 +1,13 @@
 // src/pages/EditRecipePage.jsx
 import { useState, useEffect } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, Upload, X, Plus, Image as ImageIcon, Loader } from 'lucide-react';
 import recipeService from '../services/recipeService';
 import uploadService from '../services/uploadService';
 
-export default function EditRecipePage({ recipeId, onBack, onSuccess }) {
+export default function EditRecipePage() {
+  const navigate = useNavigate();
+  const { recipeId } = useParams();
   const [loading, setLoading] = useState(true);
   const [formData, setFormData] = useState({
     name: '',
@@ -279,11 +282,7 @@ export default function EditRecipePage({ recipeId, onBack, onSuccess }) {
 
       if (result.success) {
         alert('Resep berhasil diperbarui!');
-        if (onSuccess) {
-          onSuccess(result.data);
-        } else if (onBack) {
-          onBack();
-        }
+        navigate(`/recipe/${recipeId}`);
       } else {
         throw new Error(result.message || 'Gagal memperbarui resep');
       }
@@ -297,7 +296,7 @@ export default function EditRecipePage({ recipeId, onBack, onSuccess }) {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 flex items-center justify-center">
+      <div className="min-h-screen bg-linear-to-br from-blue-50 via-white to-indigo-50 flex items-center justify-center">
         <div className="text-center">
           <Loader className="w-12 h-12 text-blue-600 animate-spin mx-auto mb-4" />
           <p className="text-slate-600">Memuat data resep...</p>
@@ -307,13 +306,13 @@ export default function EditRecipePage({ recipeId, onBack, onSuccess }) {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 pb-20 md:pb-8">
+    <div className="min-h-screen bg-linear-to-br from-blue-50 via-white to-indigo-50 pb-20 md:pb-8">
       {/* Header */}
       <div className="sticky top-0 z-10 bg-white/80 backdrop-blur-md border-b border-slate-200 shadow-sm">
         <div className="max-w-4xl mx-auto px-4 py-4">
           <button
-            onClick={onBack}
-            className="flex items-center gap-2 text-slate-700 hover:text-slate-900 transition-colors"
+            onClick={() => navigate(-1)}
+            className="flex items-center gap-2 text-indigo-600 hover:text-indigo-700 font-medium"
           >
             <ArrowLeft className="w-5 h-5" />
             <span className="font-medium">Kembali</span>
@@ -636,7 +635,7 @@ export default function EditRecipePage({ recipeId, onBack, onSuccess }) {
             <div className="flex flex-col md:flex-row gap-4 pt-6">
               <button
                 type="button"
-                onClick={onBack}
+                onClick={() => navigate(-1)}
                 disabled={updating || uploading}
                 className="flex-1 px-6 py-3 border border-slate-300 text-slate-700 rounded-xl hover:bg-slate-50 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
               >

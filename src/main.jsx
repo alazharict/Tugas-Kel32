@@ -1,6 +1,8 @@
 // src/main.jsx
+/* eslint-disable react/prop-types */
 import { StrictMode, useState } from 'react'
 import { createRoot } from 'react-dom/client'
+import { BrowserRouter as Router, Routes, Route, useParams } from "react-router-dom";
 import SplashScreen from './pages/SplashScreen';
 import HomePage from './pages/HomePage';
 import MakananPage from './pages/MakananPage';
@@ -14,109 +16,44 @@ import MobileNavbar from './components/navbar/MobileNavbar';
 import './index.css'
 import PWABadge from './PWABadge';
 
+// Layout component dengan navbar
+function Layout({ children, showNavbar = true }) {
+  return (
+    <div className="min-h-screen bg-gray-50">
+      {/* Only show navbar when needed */}
+      {showNavbar && (
+        <>
+          <DesktopNavbar />
+          <MobileNavbar />
+        </>
+      )}
+      
+      {/* Main Content */}
+      <main className="min-h-screen">
+        {children}
+      </main>
+
+      <PWABadge />
+    </div>
+  );
+}
+
+// Wrapper untuk halaman dengan layout
+function withLayout(Component, showNavbar = true) {
+  return function WrappedComponent(props) {
+    return (
+      <Layout showNavbar={showNavbar}>
+        <Component {...props} />
+      </Layout>
+    );
+  };
+}
+
 export function AppRoot() {
   const [showSplash, setShowSplash] = useState(true);
-  const [currentPage, setCurrentPage] = useState('home');
-  const [mode, setMode] = useState('list'); // 'list', 'detail', 'create', 'edit'
-  const [selectedRecipeId, setSelectedRecipeId] = useState(null);
-  const [selectedCategory, setSelectedCategory] = useState('makanan');
-  const [editingRecipeId, setEditingRecipeId] = useState(null);
 
   const handleSplashComplete = () => {
     setShowSplash(false);
-  };
-
-  const handleNavigation = (page) => {
-    setCurrentPage(page);
-    setMode('list');
-    setSelectedRecipeId(null);
-    setEditingRecipeId(null);
-  };
-
-  const handleCreateRecipe = () => {
-    setMode('create');
-  };
-
-  const handleRecipeClick = (recipeId, category) => {
-    setSelectedRecipeId(recipeId);
-    setSelectedCategory(category || currentPage);
-    setMode('detail');
-  };
-
-  const handleEditRecipe = (recipeId) => {
-    console.log('🔧 Edit button clicked! Recipe ID:', recipeId);
-    setEditingRecipeId(recipeId);
-    setMode('edit');
-    console.log('✅ Mode changed to: edit');
-  };
-
-  const handleBack = () => {
-    setMode('list');
-    setSelectedRecipeId(null);
-    setEditingRecipeId(null);
-  };
-
-  const handleCreateSuccess = (newRecipe) => {
-    alert('Resep berhasil dibuat!');
-    setMode('list');
-    // Optionally navigate to the new recipe's category
-    if (newRecipe && newRecipe.category) {
-      setCurrentPage(newRecipe.category);
-    }
-  };
-
-  const handleEditSuccess = () => {
-    alert('Resep berhasil diperbarui!');
-    setMode('list');
-  };
-
-  const renderCurrentPage = () => {
-    // Show Create Recipe Page
-    if (mode === 'create') {
-      return (
-        <CreateRecipePage
-          onBack={handleBack}
-          onSuccess={handleCreateSuccess}
-        />
-      );
-    }
-
-    // Show Edit Recipe Page
-    if (mode === 'edit') {
-      return (
-        <EditRecipePage
-          recipeId={editingRecipeId}
-          onBack={handleBack}
-          onSuccess={handleEditSuccess}
-        />
-      );
-    }
-
-    // Show Recipe Detail
-    if (mode === 'detail') {
-      return (
-        <RecipeDetail
-          recipeId={selectedRecipeId}
-          category={selectedCategory}
-          onBack={handleBack}
-          onEdit={handleEditRecipe}
-        />
-      );
-    }
-
-    // Show List Pages
-    switch (currentPage) {
-      case 'home':
-        return <HomePage onRecipeClick={handleRecipeClick} onNavigate={handleNavigation} />;
-      case 'makanan':
-        return <MakananPage onRecipeClick={handleRecipeClick} />;
-      case 'minuman':
-        return <MinumanPage onRecipeClick={handleRecipeClick} />;
-      case 'profile':
-        return <ProfilePage onRecipeClick={handleRecipeClick} />;
-      default:
-        return <HomePage onRecipeClick={handleRecipeClick} onNavigate={handleNavigation} />;
-    }
   };
 
   if (showSplash) {
@@ -124,29 +61,96 @@ export function AppRoot() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Only show navbar in list mode */}
-      {mode === 'list' && (
-        <>
-          <DesktopNavbar 
-            currentPage={currentPage} 
-            onNavigate={handleNavigation}
-            onCreateRecipe={handleCreateRecipe}
-          />
-          <MobileNavbar 
-            currentPage={currentPage} 
-            onNavigate={handleNavigation}
-            onCreateRecipe={handleCreateRecipe}
-          />
-        </>
-      )}
-      
-      {/* Main Content */}
-      <main className="min-h-screen">
-        {renderCurrentPage()}
-      </main>
+    <Router>
+      <Routes>
+        {/* Halaman dengan navbar */}
+        <Route path="/" element={withLayout(HomePage)()} />
+        <Route path="/home" element={withLayout(HomePage)()} />
+        <Route path="/makanan" element={withLayout(MakananPage)()} />
+        <Route path="/minuman" element={withLayout(MinumanPage)()} />
+        <Route path="/profile" element={withLayout(ProfilePage)()} />
+        
+        {/* Halaman detail resep dengan navbar */}
+        <Route 
+          path="/recipe/:recipeId" 
+          element={withLayout(RecipeDetailWrapper)()} 
+        />
+        
+        {/* Halaman tanpa navbar */}
+        <Route 
+          path="/create-recipe" 
+          element={withLayout(CreateRecipePage, false)()} 
+        />
+        <Route 
+          path="/edit-recipe/:recipeId" 
+          element={withLayout(EditRecipePageWrapper, false)()} 
+        />
+        
+        {/* Fallback route */}
+        <Route path="*" element={withLayout(NotFoundPage)()} />
+      </Routes>
+    </Router>
+  );
+}
 
-      <PWABadge />
+// Wrapper components untuk handle props
+function RecipeDetailWrapper() {
+  // Extract recipeId dari URL params
+  const { recipeId } = useParams();
+  
+  const handleBack = () => {
+    window.history.back();
+  };
+
+  const handleEditRecipe = (recipeId) => {
+    // Navigate to edit page
+    window.location.href = `/edit-recipe/${recipeId}`;
+  };
+
+  return (
+    <RecipeDetail
+      recipeId={recipeId}
+      onBack={handleBack}
+      onEdit={handleEditRecipe}
+    />
+  );
+}
+
+function EditRecipePageWrapper() {
+  const { recipeId } = useParams();
+  
+  const handleBack = () => {
+    window.history.back();
+  };
+
+  const handleEditSuccess = () => {
+    alert('Resep berhasil diperbarui!');
+    // Redirect back to recipe detail or previous page
+    window.history.back();
+  };
+
+  return (
+    <EditRecipePage
+      recipeId={recipeId}
+      onBack={handleBack}
+      onSuccess={handleEditSuccess}
+    />
+  );
+}
+
+function NotFoundPage() {
+  return (
+    <div className="min-h-screen flex items-center justify-center">
+      <div className="text-center">
+        <h1 className="text-4xl font-bold text-gray-800 mb-4">404</h1>
+        <p className="text-gray-600 mb-4">Halaman tidak ditemukan</p>
+        <a 
+          href="/" 
+          className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-lg transition-colors"
+        >
+          Kembali ke Beranda
+        </a>
+      </div>
     </div>
   );
 }
@@ -155,5 +159,4 @@ createRoot(document.getElementById('root')).render(
   <StrictMode>
     <AppRoot />
   </StrictMode>,
-)
-
+);
