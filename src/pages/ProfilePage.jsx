@@ -1,10 +1,12 @@
 /* eslint-disable react/prop-types */
 import { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { getUserProfile, updateAvatar, updateUsername } from '../services/userService';
 import { useFavorites, useToggleFavorite } from '../hooks/useFavorites';
 import { Clock, Star, ChefHat, Trash2, Eye } from 'lucide-react';
 
 export default function ProfilePage({ onRecipeClick }) {
+	const navigate = useNavigate();
 	const [profile, setProfile] = useState(getUserProfile());
 	const [editing, setEditing] = useState(false);
 	const [usernameValue, setUsernameValue] = useState(profile.username || 'Pengguna');
@@ -320,7 +322,10 @@ export default function ProfilePage({ onRecipeClick }) {
 
 											{/* View Recipe Button */}
 											<button
-												onClick={() => onRecipeClick?.(recipe.id, recipe.category)}
+												onClick={() => {
+													if (onRecipeClick) return onRecipeClick(recipe.id, recipe.category);
+													navigate(`/recipe/${recipe.id}`);
+												}}
 												className="w-full mt-4 bg-white/15 backdrop-blur-xl border border-white/25 text-slate-700 hover:bg-white/30 py-2.5 rounded-xl font-semibold transition-all duration-500 shadow-lg hover:shadow-xl flex items-center justify-center gap-2 group/btn"
 											>
 												<Eye className="w-4 h-4" />

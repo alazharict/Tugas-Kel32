@@ -1,15 +1,14 @@
 // src/components/common/FavoriteButton.jsx
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Heart } from 'lucide-react';
-import { useToggleFavorite } from '../../hooks/useFavorites';
+import { useIsFavorited } from '../../hooks/useFavorites';
 
 /**
  * FavoriteButton Component - Simple version
  */
 export default function FavoriteButton({ recipeId, onToggle, size = 'md' }) {
-  const [isFavorited, setIsFavorited] = useState(false);
   const [isAnimating, setIsAnimating] = useState(false);
-  const { toggleFavorite, loading } = useToggleFavorite();
+  const { isFavorited, loading, toggleFavorite } = useIsFavorited(recipeId);
 
   // Size variants
   const sizes = {
@@ -31,12 +30,9 @@ export default function FavoriteButton({ recipeId, onToggle, size = 'md' }) {
     setTimeout(() => setIsAnimating(false), 300);
 
     try {
-      const result = await toggleFavorite(recipeId);
-      
+      const result = await toggleFavorite();
       if (result) {
-        // Update local state based on API response
-        setIsFavorited(!isFavorited);
-        
+        // hook will refetch favorites and update isFavorited; call callback if provided
         if (onToggle) {
           onToggle(recipeId, !isFavorited);
         }
