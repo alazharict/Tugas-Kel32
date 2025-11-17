@@ -1,5 +1,5 @@
 ```markdown
-# 🍳 Resep Nusantara - Aplikasi Resep Masakan Indonesia
+# 🍳 Resep Nusantara - Aplikasi Resep Masakan Indonesia Tugas Kelompok 32
 
 Aplikasi PWA (Progressive Web App) untuk menjelajahi resep masakan dan minuman khas Indonesia dengan fitur favorit, pencarian, dan manajemen resep.
 
